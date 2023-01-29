@@ -2,7 +2,7 @@
 
 ### The following repo contains the yaml files needed to configure Akamai's Guardicore Kubernetes Orchestration.
 
-In order to apply the yamls, save the yamls in a server with enough privileges to the cluster's API server, run the following:
+In order to apply the yamls, either copy the commands or save the yamls and uplaod them to a server with sufficient privileges to the cluster's API server, then run the commands:
 #
 Create a new ‘guardicore-orch’ namespace:
 ```buildoutcfg
