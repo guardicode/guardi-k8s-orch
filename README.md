@@ -4,12 +4,12 @@
 
 In order to apply the yamls, either copy the commands or save the yamls and uplaod them to a server with sufficient privileges to the cluster's API server, then run the commands:
 #
-Create a new ‘guardicore-orch’ namespace:
+1. Create a new ‘guardicore-orch’ namespace:
 ```buildoutcfg
 kubectl create ns guardicore-orch
 ```
 #
-Create a new k8s service account:
+2. Create a new k8s service account:
 ```buildoutcfg
 kubectl apply -f - <<EOF
 apiVersion: v1		
@@ -20,7 +20,7 @@ metadata:
 EOF
 ```
 #
-Create a new cluster role with cluster-wide read privileges:
+3. Create a new cluster role with cluster-wide read privileges:
 ```buildoutcfg
 kubectl apply -f - <<EOF
 kind: ClusterRole
@@ -67,7 +67,7 @@ EOF
 kubectl create clusterrolebinding gc-cluster-admin-binding --clusterrole=cluster-admin --user=<your_gke_user> 
 ```
 #
-Bind the cluster role ‘cluster-reader’ to the newly created service account:
+4. Bind the cluster role ‘cluster-reader’ to the newly created service account:
 ```buildoutcfg
 kubectl apply -f - <<EOF
 kind: ClusterRoleBinding
@@ -85,7 +85,7 @@ roleRef:
 EOF
 ```
 #
-**For K8s v1.24+**: Create a persistent token to the service account:
+5. **For K8s v1.24+**: Create a persistent token to the service account:
 ```buildoutcfg
 kubectl apply -f - <<EOF
 apiVersion: v1
@@ -99,17 +99,17 @@ metadata:
 EOF
 ```
 #
-Get the token associated with the service account (note name of gc-reader-token may differ):
+6. Get the token associated with the service account (note name of gc-reader-token may differ):
 ```buildoutcfg
 kubectl get secrets -n guardicore-orch | grep gc-reader
 ```
 #
-Copy the secret output below and save it to be used for the K8s orchestration's configuration in the Guardicore UI:
+7. Copy the secret output below and save it to be used for the K8s orchestration's configuration in the Guardicore UI:
 ```buildoutcfg
-kubectl describe secret -n guardicore-orch gc-reader-token-lg9tr
+kubectl describe secret -n guardicore-orch gc-reader-token
 ```
 #
-**(Optional)** Get the decoded cluster certificate and save a copy to be used for the K8s orchestration's configuration in the Guardicore UI:
+8. **(Optional)** Get the decoded cluster certificate and save a copy to be used for the K8s orchestration's configuration in the Guardicore UI:
 * Kubernetes:
 ```buildoutcfg
 kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}' | base64 --decode
