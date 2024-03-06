@@ -39,7 +39,7 @@ other than "guardicore-orch" (which is the default).
 3. A similar output should be seen
 ```buildoutcfg
 # ./gc_k8s_orch.sh -c
-Checking that kubctl exists ... ok
+Checking that kubectl exists ... ok
 Creating guardicore-orch namespace
 namespace/guardicore-orch created
 Creating Guardicore service account
@@ -51,7 +51,7 @@ secret/gc-secret created
 
 The following details should be used for configuring this cluster's K8s Orchestration in Akamai Guardicore:
 
-Server IP Address and port:
+Server IP Address / FQDN and port:
 IP Address: api.ocp4....com Port: 6443
 
 Service Account Token (copy/paste):

@@ -20,7 +20,7 @@ function usage () {
 # check_for_kubectl --- make sure we have kubectl
 
 function check_for_kubectl () {
-	printf "Checking that kubctl exists ... "
+	printf "Checking that kubectl exists ... "
 	if (type kubectl > /dev/null 2>&1)
 	then
 		echo ok		# we're good
@@ -33,14 +33,24 @@ function check_for_kubectl () {
 # get_server_version --- extract version in form of 1.20
 
 function get_server_version () {
-	# send errors to /dev/null ; --short option is obsolete and the
-	# default on newer versions but not on older ones
-	kubectl version --short 2>/dev/null |
-		awk '/Server/ {
-			split($NF, fields, /\./)
-			sub(/v/, "", fields[1])
-			printf("%s.%s\n", fields[1], fields[2])
-		}'
+	kubectl version -o json 2>/dev/null |
+		awk '
+			/"serverVersion":/ { searching = 1 ; next }
+			searching && /"major"/ { major = $2 ; next }
+			searching && /"minor"/ { minor = $2 ; next }
+			END {
+				if (! major || ! minor) {
+					print "Could not find K8S version info." > "/dev/stderr"
+					print "Please report this to Guardicore, along with" > "/dev/stderr"
+					print "the output of \"kubectl version -o json\"." > "/dev/stderr"
+					exit 1
+				}
+				gsub(/[",]/, "", major)
+				gsub(/[",]/, "", minor)
+
+				printf("%s.%s\n", major, minor)
+			}'
+	
 }
 
 # create_namespace -- create the orchestration namespace
@@ -113,7 +123,7 @@ function create_gc_reader () {
 	EOF
 }
 
-# create_gc_secret --- create the secret; for K8s >= 1.24
+# create_gc_secret --- create the secret; for K8s >= 1.24 
 
 function create_gc_secret () {
 	echo Creating service account token
@@ -166,7 +176,7 @@ function get_server () {
 		esac
 	done
 
-	if [ "$desired_server" != "" ]
+	if [ "$desired_server" != "" ] && [[ -v "servers[$desired_server]" ]]
 	then
 		print_server "${servers[$desired_server]}"
 	else
@@ -180,11 +190,11 @@ function get_server () {
 # print_server --- format the server info nicely
 
 function print_server () {
-	echo $1 | sed -e 's/:\([0-9][0-9]*\)/ Port: \1/' -e 's;.*https*://;IP Address: ;'
+	echo $1 | sed -e 's/:\([0-9][0-9]*\)/ Port: \1/' -e 's;.*https*://;IP Address / FQDN: ;'
 
 }
 
-# print_server_ip_and_port --- print the server IP address and port number
+# print_server_ip_and_port --- print the server IP address (or FQDN) and port number
 
 function print_server_ip_and_port () {
 	kubectl config view | get_server
@@ -203,7 +213,7 @@ function print_certificate () {
 
 function print_token () {
 	kubectl get secret --namespace $ORCH_NAMESPACE -o yaml |
-		grep ' token:' | tail -1 | sed 's/^ *token: *//' |
+		grep ' token:' | tail -1 | sed 's/^ *token: *//' | 
 			base64 --decode
 	echo
 }
@@ -239,7 +249,7 @@ echo
 echo "The following details should be used for configuring this cluster's K8s Orchestration in Akamai Guardicore:"
 
 echo
-echo Server IP Address and port:
+echo Server IP Address / FQDN and port:
 print_server_ip_and_port
 
 echo
