@@ -205,7 +205,7 @@ function print_server_ip_and_port () {
 function print_certificate () {
 	kubectl config view --raw --minify \
 		--flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}' |
-		base64 --decode
+		base64 -d	# don't use --decode, busybox version doesn't support it
 	echo
 }
 
@@ -214,7 +214,7 @@ function print_certificate () {
 function print_token () {
 	kubectl get secret --namespace $ORCH_NAMESPACE -o yaml |
 		grep ' token:' | tail -1 | sed 's/^ *token: *//' | 
-			base64 --decode
+			base64 -d	# don't use --decode, busybox version doesn't support it
 	echo
 }
 
@@ -239,8 +239,9 @@ check_for_kubectl
 create_namespace
 create_gc_reader
 
+# allow anything after 1.2X, e.g. EKS uses 1.27+.
 case $(get_server_version) in
-1.2[4-9] | 1.[3-9]* | [2-9]*.*)
+1.2[4-9]* | 1.[3-9]* | [2-9]*.*)
 	create_gc_secret
 	;;
 esac
