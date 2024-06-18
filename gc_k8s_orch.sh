@@ -190,8 +190,21 @@ function get_server () {
 # print_server --- format the server info nicely
 
 function print_server () {
-	echo $1 | sed -e 's/:\([0-9][0-9]*\)/ Port: \1/' -e 's;.*https*://;IP Address / FQDN: ;'
+	local used_default port host
 
+	eval $(echo $1 | awk -F: '{ sub(/.*https?:\/\//, "") }
+				NF == 1 { printf "host=%s port=%s used_default=true\n", $1, 6443 }
+				NF == 2 { printf "host=%s port=%s used_default=false\n", $1, $2 }')
+
+	if $used_default
+	then
+		echo "IP Address / FQDN: $host"
+		echo
+		echo "The K8S server did not supply a port. Please try 6443."
+		echo "If that does not work, please try port 443."
+	else
+		echo "IP Address / FQDN: $host  Port: $port"
+	fi
 }
 
 # print_server_ip_and_port --- print the server IP address (or FQDN) and port number
@@ -212,7 +225,9 @@ function print_certificate () {
 # print_token --- print the secret
 
 function print_token () {
-	kubectl get secret --namespace $ORCH_NAMESPACE -o yaml |
+	# GC-88799 - fetch the desired secret explicitly, in case, somehow, there are
+	# multiple secrets in the namespace.
+	kubectl get secret --namespace $ORCH_NAMESPACE gc-secret -o yaml |
 		grep ' token:' | tail -1 | sed 's/^ *token: *//' | 
 			base64 -d	# don't use --decode, busybox version doesn't support it
 	echo
